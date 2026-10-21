@@ -188,13 +188,49 @@ def main():
     print("[INFO] Jangan tutup jendela ini selama Anda menggunakan web.")
     print("[INFO] Tekan Ctrl + C di jendela ini untuk menghentikan server kapan saja.\n")
 
-    # Keep alive and print remaining logs
+    def log_tunnel(proc):
+        try:
+            for line in iter(proc.stdout.readline, ''):
+                if not line:
+                    break
+                if "ERR" in line or "failed" in line:
+                    print(f"[TUNNEL] {line.strip()}")
+                time.sleep(0.01)
+        except Exception:
+            pass
+
+    t_log = threading.Thread(target=log_tunnel, args=(p_tunnel,), daemon=True)
+    t_log.start()
+
     try:
-        for line in iter(p_tunnel.stdout.readline, ''):
-            # Print important status or errors if any
-            if "ERR" in line or "failed" in line:
-                print(f"[TUNNEL] {line.strip()}")
-            time.sleep(0.01)
+        while True:
+            # Watchdog: pastikan tunnel tetap hidup
+            if p_tunnel.poll() is not None:
+                print("\n[WARN] Cloudflare Tunnel terputus. Mencoba menghubungkan kembali...")
+                p_tunnel = subprocess.Popen(
+                    [CLOUDFLARED_EXE, "tunnel", "--url", "http://localhost:5000"],
+                    cwd=BASE_DIR,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1
+                )
+                processes.append(p_tunnel)
+                for line in iter(p_tunnel.stdout.readline, ''):
+                    if not line:
+                        break
+                    match = url_regex.search(line)
+                    if match:
+                        new_u = match.group(0)
+                        print(f"[ONLINE] Reconnected: {new_u}")
+                        t_rec = threading.Thread(target=update_appjs_and_push, args=(new_u,))
+                        t_rec.daemon = True
+                        t_rec.start()
+                        break
+                t_log = threading.Thread(target=log_tunnel, args=(p_tunnel,), daemon=True)
+                t_log.start()
+
+            time.sleep(2)
     except KeyboardInterrupt:
         cleanup()
 
