@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://roughly-dry-cliff-shared.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://atmospheric-peter-hunter-library.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
