@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://rational-choices-beef-citizen.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://collectors-tattoo-manga-reviews.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
