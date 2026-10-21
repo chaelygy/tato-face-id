@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TATO FACE SCAN &bull; Stealth Onyx Facial Intelligence</title>
+    <meta name="description" content="Executive Sleek Black Face Scanner powered by RetinaFace & Facenet 512D Biometric Architecture">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="stealth-onyx-body">
+    <!-- Subtle Carbon Noise & Ambient Shadows -->
+    <div class="onyx-ambient-spotlight"></div>
+    <div class="carbon-texture-bg"></div>
+
+    <div class="executive-shell">
+        <!-- Sleek Onyx Navigation -->
+        <header class="executive-navbar">
+            <div class="nav-brand">
+                <div class="brand-monolith">
+                    <span class="monolith-glyph">&#9650;</span>
+                </div>
+                <div class="brand-copy">
+                    <div class="brand-title">TATO <span class="titanium-text">SCAN</span></div>
+                    <div class="brand-caption">STEALTH FACIAL DOSSIER &bull; ONYX EDITION</div>
+                </div>
+            </div>
+
+            <!-- Central Minimalist Spec Ticker -->
+            <div class="nav-spec-strip">
+                <div class="spec-node">
+                    <span class="spec-dim">ENGINE</span>
+                    <span class="spec-bright">RetinaFace ResNet</span>
+                </div>
+                <div class="spec-node-divider">/</div>
+                <div class="spec-node">
+                    <span class="spec-dim">VECTOR</span>
+                    <span class="spec-bright">512D Embedding</span>
+                </div>
+                <div class="spec-node-divider">/</div>
+                <div class="spec-node">
+                    <span class="spec-dim">COSINE</span>
+                    <span class="spec-bright titanium-text">0.420 KNN</span>
+                </div>
+            </div>
+
+            <!-- Executive Status Controls -->
+            <div class="nav-cluster">
+                <div class="dossier-index-pill">
+                    <span class="index-bullet">&#9679;</span>
+                    <span class="index-val" id="statPersons">24</span>
+                    <span class="index-lbl">Identitas</span>
+                </div>
+
+                <div class="stealth-conn-pill" id="navStatus" onclick="configureServerUrl()" title="Pengaturan Server Gateway">
+                    <span class="stealth-dot offline"></span>
+                    <span class="stealth-txt">Menghubungkan...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Segmented Mode Control Strip -->
+        <div class="stealth-control-strip">
+            <div class="mode-pills">
+                <button class="pill-btn active" id="btnWebcam" onclick="switchMode('webcam')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>SENSOR KAMERA LIVE</span>
+                </button>
+                <button class="pill-btn" id="btnUpload" onclick="switchMode('upload')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>PINDAI ARSIP FOTO</span>
+                </button>
+            </div>
+
+            <div class="security-level-pill">
+                CLEARANCE LEVEL: <span class="titanium-text">TOP SECRET // BIOMETRIC-ALPHA</span>
+            </div>
+        </div>
+
+        <!-- Main Workspace: Asymmetric Executive Grid -->
+        <main class="executive-grid">
+            <!-- Left: Obsidian Viewport & Camera Stage -->
+            <section class="viewport-monolith">
+                <div class="monolith-header">
+                    <div class="title-with-hairline">
+                        <span class="roman-accent">&bull;</span>
+                        <h2 id="panelTitle">Sensor Kamera Real-Time</h2>
+                    </div>
+
+                    <div class="monolith-actions" id="webcamControls">
+                        <button class="btn-stealth-gold" id="btnStartCam" onclick="startWebcam()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            <span>Aktifkan Scanner</span>
+                        </button>
+                        <button class="btn-stealth-danger hidden" id="btnStopCam" onclick="stopWebcam()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="6" width="12" height="12"/>
+                            </svg>
+                            <span>Hentikan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dark Stage Viewport Frame -->
+                <div class="stage-frame" id="videoContainer">
+                    <div class="stealth-pin pin-tl"></div>
+                    <div class="stealth-pin pin-tr"></div>
+                    <div class="stealth-pin pin-bl"></div>
+                    <div class="stealth-pin pin-br"></div>
+
+                    <!-- Webcam Layer -->
+                    <div class="stage-video-layer" id="webcamWrapper">
+                        <video id="webcamVideo" autoplay playsinline muted></video>
+                        <canvas id="overlayCanvas"></canvas>
+                        <div class="gold-beam-scanner" id="scanLine"></div>
+
+                        <div class="stealth-standby-screen" id="videoPlaceholder">
+                            <div class="monolith-shield-ring">
+                                <span class="shield-glyph">&#9670;</span>
+                            </div>
+                            <h3>SENSOR BIOMETRIK STANDBY</h3>
+                            <p>Aktifkan scanner kamera untuk memulai pelacakan biometrik Tato Face Scan</p>
+                            <button class="btn-matte-titanium" onclick="startWebcam()">MULAI PEMINDAIAN</button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Layer -->
+                    <div class="stage-upload-layer hidden" id="uploadWrapper">
+                        <div class="stealth-dropzone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                            <div class="dropzone-crest">&#8853;</div>
+                            <h3>IMPORT BERKAS GAMBAR</h3>
+                            <p>Tarik file foto atau klik untuk memilih berkas dari perangkat</p>
+                            <span class="file-format-spec">[ FORMAT: JPG &bull; PNG &bull; WEBP &bull; MAX 10MB ]</span>
+                        </div>
+
+                        <div class="stage-preview-container hidden" id="uploadedPreview">
+                            <img id="uploadedImage" alt="Dossier Subject">
+                            <canvas id="uploadOverlayCanvas"></canvas>
+                            <button class="btn-eject-stealth" onclick="removeUpload()">
+                                &#10005; Keluarkan Gambar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Monolith Stage Footer Telemetry -->
+                    <div class="monolith-footer">
+                        <div class="telemetry-item">
+                            FRAME: <span class="titanium-text">STREAM 1080P PRO</span>
+                        </div>
+                        <div class="telemetry-item">
+                            LATENSI: <span id="perfTime">0 ms</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right: Executive Biometric Dossier -->
+            <section class="dossier-monolith">
+                <div class="monolith-header">
+                    <div class="title-with-hairline">
+                        <span class="roman-accent">&bull;</span>
+                        <h2>Dossier Verifikasi</h2>
+                    </div>
+
+                    <div class="target-counter-box" id="faceCount">
+                        0 Wajah Terdeteksi
+                    </div>
+                </div>
+
+                <!-- Stealth Loading Stripe -->
+                <div class="stealth-loader-strip hidden" id="processingIndicator">
+                    <div class="stealth-laser-track">
+                        <div class="stealth-laser-thumb"></div>
+                    </div>
+                    <span>MEMPROSES ANALISIS 512D...</span>
+                </div>
+
+                <!-- Result Cards Stream -->
+                <div class="results-stream" id="resultsList">
+                    <div class="stealth-empty-box" id="emptyState">
+                        <div class="stealth-target-icon">&#8857;</div>
+                        <h3>MENUNGGU SUBJEK PEMINDAIAN</h3>
+                        <p>Posisikan wajah di depan lensa atau unggah foto untuk mengeksekusi pencocokan biometrik.</p>
+                    </div>
+                </div>
+
+                <!-- Identity Archive Vault -->
+                <div class="archive-vault-card">
+                    <div class="archive-vault-top">
+                        <div class="archive-vault-title">
+                            <span class="titanium-text">&#9646;</span>
+                            <h3>ARSIP IDENTITAS TERDAFTAR</h3>
+                        </div>
+                        <button class="btn-vault-sync" id="btnRefreshDb" onclick="loadPersons()">SYNC</button>
+                    </div>
+
+                    <div class="vault-search-row">
+                        <span class="search-ico">&#9906;</span>
+                        <input type="text" id="searchPersons" placeholder="Cari identitas personel...">
+                    </div>
+
+                    <div class="vault-person-grid" id="personsList">
+                        <div class="stealth-loading-txt">Memuat arsip...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

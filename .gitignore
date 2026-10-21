@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.tmp
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Dataset foto mentah (sudah dirangkum ke face_encodings.pkl, tidak perlu di-upload)
+bahan baku/
+
+# OS specific files
+Thumbs.db
+.DS_Store
+*.log
+cloudflared.exe

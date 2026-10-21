@@ -1,0 +1,19 @@
+# ============================================
+# Face Recognition System - Requirements
+# ============================================
+
+# Backend Framework & Production Server
+flask
+flask-cors
+gunicorn
+
+# Computer Vision & Image Processing
+opencv-python-headless
+Pillow
+numpy
+tqdm
+
+# Deep Learning Face Recognition
+deepface
+retina-face
+onnxruntime

@@ -1,0 +1,13 @@
+# Vercel Deployment Ignore
+# Mencegah Vercel mendeteksi Python & mencoba install requirements.txt
+requirements.txt
+app.py
+train.py
+launcher.py
+start_server.bat
+Dockerfile
+cloudflared.exe
+face_encodings.pkl
+bahan baku/
+*.pkl
+*.bat
