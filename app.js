@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://collectors-tattoo-manga-reviews.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://blvd-ends-contemporary-trend.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
