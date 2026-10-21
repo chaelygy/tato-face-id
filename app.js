@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://screen-precision-boot-mutual.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://kilometers-lol-nickel-turns.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
