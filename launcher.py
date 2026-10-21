@@ -97,6 +97,7 @@ def main():
     print("=" * 65)
 
     processes = []
+    p_app = None
 
     def cleanup(sig=None, frame=None):
         print("\n\n[INFO] Menghentikan semua proses server...")
@@ -204,31 +205,49 @@ def main():
 
     try:
         while True:
-            # Watchdog: pastikan tunnel tetap hidup
-            if p_tunnel.poll() is not None:
-                print("\n[WARN] Cloudflare Tunnel terputus. Mencoba menghubungkan kembali...")
-                p_tunnel = subprocess.Popen(
-                    [CLOUDFLARED_EXE, "tunnel", "--url", "http://localhost:5000"],
-                    cwd=BASE_DIR,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1
-                )
-                processes.append(p_tunnel)
-                for line in iter(p_tunnel.stdout.readline, ''):
-                    if not line:
-                        break
-                    match = url_regex.search(line)
-                    if match:
-                        new_u = match.group(0)
-                        print(f"[ONLINE] Reconnected: {new_u}")
-                        t_rec = threading.Thread(target=update_appjs_and_push, args=(new_u,))
-                        t_rec.daemon = True
-                        t_rec.start()
-                        break
-                t_log = threading.Thread(target=log_tunnel, args=(p_tunnel,), daemon=True)
-                t_log.start()
+            try:
+                # Watchdog Backend: pastikan backend python tetap hidup
+                if not is_port_in_use(5000):
+                    print("\n[WARN] Backend Python app.py terhenti. Menyalakan kembali...")
+                    p_app = subprocess.Popen(
+                        [sys.executable, "app.py"],
+                        cwd=BASE_DIR
+                    )
+                    processes.append(p_app)
+                    for _ in range(15):
+                        if is_port_in_use(5000):
+                            print("      [OK] Backend AI Python kembali aktif!")
+                            break
+                        time.sleep(1)
+
+                # Watchdog Tunnel: pastikan tunnel tetap hidup
+                if p_tunnel.poll() is not None:
+                    print("\n[WARN] Cloudflare Tunnel terputus. Mencoba menghubungkan kembali...")
+                    p_tunnel = subprocess.Popen(
+                        [CLOUDFLARED_EXE, "tunnel", "--url", "http://localhost:5000"],
+                        cwd=BASE_DIR,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1
+                    )
+                    processes.append(p_tunnel)
+                    for line in iter(p_tunnel.stdout.readline, ''):
+                        if not line:
+                            break
+                        match = url_regex.search(line)
+                        if match:
+                            new_u = match.group(0)
+                            print(f"[ONLINE] Reconnected: {new_u}")
+                            t_rec = threading.Thread(target=update_appjs_and_push, args=(new_u,))
+                            t_rec.daemon = True
+                            t_rec.start()
+                            break
+                    t_log = threading.Thread(target=log_tunnel, args=(p_tunnel,), daemon=True)
+                    t_log.start()
+
+            except Exception as loop_err:
+                print(f"[WATCHDOG ERROR] {loop_err}")
 
             time.sleep(2)
     except KeyboardInterrupt:
