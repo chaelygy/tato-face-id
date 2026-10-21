@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://boutique-vehicles-islands-dayton.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://prices-objective-storage-eliminate.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
