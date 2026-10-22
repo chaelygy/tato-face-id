@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://columns-temple-thousands-benchmark.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://after-incredible-sentences-pixel.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
