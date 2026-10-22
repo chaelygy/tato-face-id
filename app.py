@@ -39,7 +39,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENCODING_FILE = os.path.join(BASE_DIR, "face_encodings.pkl")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 MODEL_NAME = "Facenet512"
-DETECTOR_BACKEND = "retinaface"
+DETECTOR_BACKEND = "yunet"
 
 # Threshold fallback jika tidak ada di file pickle
 DEFAULT_THRESHOLD = 0.30
@@ -103,22 +103,24 @@ def load_face_data():
         print(f"  - Total orang   : {face_data.get('total_persons', 0)}")
         print(f"  - Total vektor  : {total_vectors} embedding aktif")
         print(f"  - Model         : {face_data.get('model_name', MODEL_NAME)}")
+        print(f"  - Detector      : {DETECTOR_BACKEND} (Ultra-Fast CNN)")
         print(f"  - Threshold     : {face_data.get('threshold', DEFAULT_THRESHOLD):.4f}")
         print(f"  - Orang         : {', '.join(face_data.get('person_names', []))}")
         
-        # Pre-warm model dengan dummy image jika belum di-warm
+        # Pre-warm model dan detector dengan dummy image agar request pertama instan
         if not model_loaded:
-            print("[INFO] Pre-warming model DeepFace...")
+            print(f"[INFO] Pre-warming model DeepFace ({MODEL_NAME} + {DETECTOR_BACKEND})...")
             try:
-                dummy = np.zeros((160, 160, 3), dtype=np.uint8)
-                dummy[50:110, 50:110] = 128
+                dummy = np.zeros((224, 224, 3), dtype=np.uint8)
+                dummy[50:150, 50:150] = 120
                 DeepFace.represent(
                     img_path=dummy,
                     model_name=MODEL_NAME,
-                    detector_backend="skip",
-                    enforce_detection=False
+                    detector_backend=DETECTOR_BACKEND,
+                    enforce_detection=False,
+                    align=True
                 )
-                print("[INFO] Model DeepFace siap!")
+                print("[INFO] Model DeepFace & Detector siap!")
             except Exception as e:
                 print(f"[WARNING] Pre-warming: {e}")
         
@@ -210,36 +212,65 @@ def recognize_face_embedding(embedding):
 
 def process_image(img_array):
     """
-    Memproses gambar: deteksi wajah dan kenali setiap wajah.
+    Memproses gambar: deteksi wajah dan kenali setiap wajah secara ultra-cepat.
     
     Returns: list of dict dengan info setiap wajah terdeteksi.
     """
     results = []
+    if img_array is None or img_array.size == 0:
+        return results
     
     try:
-        # Deteksi dan ekstrak embedding wajah
-        representations = DeepFace.represent(
-            img_path=img_array,
-            model_name=MODEL_NAME,
-            detector_backend=DETECTOR_BACKEND,
-            enforce_detection=False,
-            align=True
-        )
+        # Optimasi kecepatan: jika gambar besar (> 720px), resize untuk akselerasi deteksi
+        orig_h, orig_w = img_array.shape[:2]
+        max_dim = 720
+        scale = 1.0
+        if max(orig_h, orig_w) > max_dim:
+            scale = max_dim / float(max(orig_h, orig_w))
+            proc_img = cv2.resize(img_array, (int(orig_w * scale), int(orig_h * scale)), interpolation=cv2.INTER_AREA)
+        else:
+            proc_img = img_array
+
+        # Deteksi dan ekstrak embedding wajah (YuNet / fallback OpenCV)
+        try:
+            representations = DeepFace.represent(
+                img_path=proc_img,
+                model_name=MODEL_NAME,
+                detector_backend=DETECTOR_BACKEND,
+                enforce_detection=False,
+                align=True
+            )
+        except Exception as det_err:
+            if DETECTOR_BACKEND != "opencv":
+                representations = DeepFace.represent(
+                    img_path=proc_img,
+                    model_name=MODEL_NAME,
+                    detector_backend="opencv",
+                    enforce_detection=False,
+                    align=False
+                )
+            else:
+                raise det_err
 
         for rep in representations:
             embedding = np.array(rep["embedding"])
             
-            # Ambil koordinat wajah
+            # Ambil koordinat wajah dan scale kembali ke resolusi input jika di-resize
             facial_area = rep.get("facial_area", {})
             x = facial_area.get("x", 0)
             y = facial_area.get("y", 0)
             w = facial_area.get("w", 0)
             h = facial_area.get("h", 0)
             
+            if scale != 1.0:
+                x = int(round(x / scale))
+                y = int(round(y / scale))
+                w = int(round(w / scale))
+                h = int(round(h / scale))
+
             # Kenali wajah
             name, confidence, distance = recognize_face_embedding(embedding)
             
-            # Hanya masukkan jika confidence > 0 atau ada wajah terdeteksi
             face_info = {
                 "name": name,
                 "confidence": round(confidence, 1),
@@ -317,7 +348,7 @@ def get_persons():
 @app.route("/api/recognize", methods=["POST"])
 def recognize():
     """
-    Menerima gambar (base64 atau file upload) dan mengenali wajah.
+    Menerima gambar (base64 atau file upload) dan mengenali wajah secara instan.
     
     Body (JSON):  { "image": "data:image/jpeg;base64,..." }
     Body (Form):  file upload dengan key "image"
@@ -341,25 +372,29 @@ def recognize():
             
             # Hapus header data URI jika ada
             if "," in image_data:
-                image_data = image_data.split(",")[1]
+                image_data = image_data.split(",", 1)[1]
             
-            # Decode base64
+            # Fast decode base64 langsung ke numpy BGR array via C++ OpenCV
             img_bytes = base64.b64decode(image_data)
-            img_pil = Image.open(BytesIO(img_bytes)).convert("RGB")
-            img_array = np.array(img_pil)
-            # Convert RGB to BGR for OpenCV compatibility
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            img_array = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         # Mode 2: File upload
         elif "image" in request.files:
             file = request.files["image"]
-            img_pil = Image.open(file.stream).convert("RGB")
-            img_array = np.array(img_pil)
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+            file_bytes = file.read()
+            nparr = np.frombuffer(file_bytes, np.uint8)
+            img_array = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         else:
             return jsonify({
                 "error": "Tidak ada gambar yang diterima.",
+                "faces": []
+            }), 400
+
+        if img_array is None:
+            return jsonify({
+                "error": "Gagal mendekode gambar.",
                 "faces": []
             }), 400
 
