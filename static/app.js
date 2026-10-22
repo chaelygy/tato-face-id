@@ -5,7 +5,7 @@
  * =====================================================================
  */
 
-const CLOUD_BACKEND_URL = 'https://consist-classic-bracelets-payday.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://movement-imagination-rapids-others.trycloudflare.com';
 
 const isFileProtocol = window.location.protocol === 'file:';
 const isLocal = Boolean(
